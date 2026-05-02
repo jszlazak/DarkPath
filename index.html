@@ -43,16 +43,24 @@
     #globe {
       position: fixed;
       inset: 0;
+      z-index: 1;
       width: 100vw;
       height: 100vh;
       background: #050607;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+
+    #globe:active {
+      cursor: grabbing;
     }
 
     .fallback-globe {
       position: fixed;
       right: min(7vw, 92px);
       top: 50%;
-      z-index: 1;
+      z-index: 2;
       width: min(50vw, 620px);
       aspect-ratio: 1;
       border: 1px solid rgba(245, 219, 140, 0.28);
@@ -105,7 +113,7 @@
 
     .shell {
       position: relative;
-      z-index: 2;
+      z-index: 3;
       display: grid;
       grid-template-rows: auto 1fr auto;
       width: 100vw;
@@ -313,9 +321,13 @@
   </main>
   <p class="fallback">The interactive globe needs WebGL. Try opening this page in a current desktop or mobile browser.</p>
 
-  <script type="module">
-    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js";
-    import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/controls/OrbitControls.js";
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    window.addEventListener("DOMContentLoaded", init);
+
+    async function init() {
+    const EARTH_IMAGE_URL = "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/textures/planets/earth_atmos_2048.jpg";
 
     const AFRICA = [
       [-17, 32], [-8, 35], [2, 37], [12, 33], [25, 32], [34, 31], [35, 23],
@@ -378,7 +390,7 @@
     const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.set(0.25, 0.2, 6.2);
 
-    const controls = new OrbitControls(camera, renderer.domElement);
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
     controls.enablePan = false;
@@ -386,15 +398,28 @@
     controls.autoRotateSpeed = 0.38;
     controls.minDistance = 2.35;
     controls.maxDistance = 7.2;
-    controls.rotateSpeed = 0.42;
-    controls.zoomSpeed = 0.7;
+    controls.rotateSpeed = 0.72;
+    controls.zoomSpeed = 1.05;
+    controls.touches = {
+      ONE: THREE.TOUCH.ROTATE,
+      TWO: THREE.TOUCH.DOLLY_ROTATE
+    };
+    controls.addEventListener("start", () => {
+      controls.autoRotate = false;
+    });
+    controls.addEventListener("end", () => {
+      window.setTimeout(() => {
+        controls.autoRotate = true;
+      }, 1800);
+    });
 
     const globeGroup = new THREE.Group();
+    globeGroup.rotation.y = THREE.MathUtils.degToRad(-110);
     scene.add(globeGroup);
 
     const radius = 1.82;
     const routeLift = 0.36;
-    const texture = buildEarthTexture();
+    const texture = await buildEarthTexture();
     const globe = new THREE.Mesh(
       new THREE.SphereGeometry(radius, 96, 96),
       new THREE.MeshStandardMaterial({
@@ -489,29 +514,52 @@
     }
     animate();
 
-    function buildEarthTexture() {
+    async function buildEarthTexture() {
       const canvasTexture = document.createElement("canvas");
       canvasTexture.width = 2048;
       canvasTexture.height = 1024;
       const ctx = canvasTexture.getContext("2d");
 
-      const ocean = ctx.createLinearGradient(0, 0, canvasTexture.width, canvasTexture.height);
-      ocean.addColorStop(0, "#1a1b1b");
-      ocean.addColorStop(0.52, "#0f1112");
-      ocean.addColorStop(1, "#282821");
-      ctx.fillStyle = ocean;
-      ctx.fillRect(0, 0, canvasTexture.width, canvasTexture.height);
+      try {
+        const earthImage = await loadImage(EARTH_IMAGE_URL);
+        ctx.filter = "grayscale(1) brightness(0.48) contrast(1.08)";
+        ctx.drawImage(earthImage, 0, 0, canvasTexture.width, canvasTexture.height);
+        ctx.filter = "none";
+        ctx.fillStyle = "rgba(5, 6, 7, 0.18)";
+        ctx.fillRect(0, 0, canvasTexture.width, canvasTexture.height);
+      } catch (error) {
+        const ocean = ctx.createLinearGradient(0, 0, canvasTexture.width, canvasTexture.height);
+        ocean.addColorStop(0, "#1a1b1b");
+        ocean.addColorStop(0.52, "#0f1112");
+        ocean.addColorStop(1, "#282821");
+        ctx.fillStyle = ocean;
+        ctx.fillRect(0, 0, canvasTexture.width, canvasTexture.height);
+        CONTINENTS.forEach((continent) => drawPolygon(ctx, continent, canvasTexture.width, canvasTexture.height, "rgba(148, 148, 140, 0.54)", "rgba(255, 255, 255, 0.1)", 2));
+      }
 
       drawGraticule(ctx, canvasTexture.width, canvasTexture.height);
-      CONTINENTS.forEach((continent) => drawPolygon(ctx, continent, canvasTexture.width, canvasTexture.height, "rgba(148, 148, 140, 0.54)", "rgba(255, 255, 255, 0.1)", 2));
       drawPolygon(ctx, AFRICA, canvasTexture.width, canvasTexture.height, "rgba(217, 183, 101, 0.54)", "rgba(245, 219, 140, 0.94)", 6);
       drawPolygon(ctx, MADAGASCAR, canvasTexture.width, canvasTexture.height, "rgba(217, 183, 101, 0.42)", "rgba(245, 219, 140, 0.72)", 3);
 
       const texture = new THREE.CanvasTexture(canvasTexture);
-      texture.colorSpace = THREE.SRGBColorSpace;
+      if ("colorSpace" in texture && "SRGBColorSpace" in THREE) {
+        texture.colorSpace = THREE.SRGBColorSpace;
+      } else {
+        texture.encoding = THREE.sRGBEncoding;
+      }
       texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
       texture.needsUpdate = true;
       return texture;
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.crossOrigin = "anonymous";
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = src;
+      });
     }
 
     function drawGraticule(ctx, width, height) {
@@ -561,11 +609,11 @@
 
     function latLonToVector(lon, lat, targetRadius) {
       const phi = THREE.MathUtils.degToRad(90 - lat);
-      const theta = THREE.MathUtils.degToRad(lon);
+      const theta = THREE.MathUtils.degToRad(lon + 180);
       return new THREE.Vector3(
-        targetRadius * Math.sin(phi) * Math.sin(theta),
+        -targetRadius * Math.cos(theta) * Math.sin(phi),
         targetRadius * Math.cos(phi),
-        targetRadius * Math.sin(phi) * Math.cos(theta)
+        targetRadius * Math.sin(theta) * Math.sin(phi)
       );
     }
 
@@ -642,7 +690,7 @@
         })
       );
     }
-
+    }
   </script>
 </body>
 </html>
