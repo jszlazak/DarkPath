@@ -3,91 +3,646 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DarkPath Globe</title>
+  <meta name="theme-color" content="#050607" />
+  <title>DarkPath</title>
   <style>
     * {
       box-sizing: border-box;
     }
 
+    :root {
+      color-scheme: dark;
+      --ink: #f5f1e8;
+      --muted: rgba(245, 241, 232, 0.68);
+      --line: rgba(245, 241, 232, 0.16);
+      --accent: #d9b765;
+      --accent-hot: #f5db8c;
+      --panel: rgba(6, 7, 9, 0.62);
+    }
+
+    html,
     body {
+      width: 100%;
+      min-height: 100%;
       margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
+    }
+
+    body {
       overflow: hidden;
-      font-family: Segoe UI, Tahoma, sans-serif;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
-        radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.2) 0 1px, transparent 2px),
-        radial-gradient(circle at 72% 18%, rgba(255, 255, 255, 0.18) 0 1px, transparent 2px),
-        radial-gradient(circle at 88% 64%, rgba(255, 255, 255, 0.16) 0 1px, transparent 2px),
-        linear-gradient(145deg, #05070d, #10192b 58%, #080b12);
-      color: #eef6ff;
+        radial-gradient(circle at 18% 12%, rgba(217, 183, 101, 0.12), transparent 28%),
+        linear-gradient(135deg, #050607 0%, #0d0f12 45%, #040404 100%);
+      color: var(--ink);
     }
 
-    .scene {
-      display: grid;
-      gap: 28px;
-      justify-items: center;
-      padding: 32px;
-      text-align: center;
+    a {
+      color: inherit;
     }
 
-    .globe {
-      position: relative;
-      width: min(72vw, 420px);
-      aspect-ratio: 1;
-      border-radius: 50%;
-      overflow: hidden;
-      background:
-        radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.78), transparent 0 3%, transparent 16%),
-        radial-gradient(circle at 28% 25%, #74d8ff 0 10%, transparent 11%),
-        radial-gradient(circle at 42% 47%, #2fb06f 0 9%, transparent 10%),
-        radial-gradient(circle at 61% 34%, #57c87d 0 8%, transparent 9%),
-        radial-gradient(circle at 63% 62%, #d9b15c 0 8%, transparent 9%),
-        radial-gradient(circle at 44% 70%, #36a96c 0 7%, transparent 8%),
-        radial-gradient(circle at 50% 50%, #1a8ad8 0 58%, #0c3e78 75%, #061a3c 100%);
-      border: 2px solid rgba(180, 226, 255, 0.45);
-      box-shadow:
-        0 0 48px rgba(80, 180, 255, 0.34),
-        inset -34px -26px 60px rgba(0, 0, 0, 0.48),
-        inset 18px 18px 40px rgba(255, 255, 255, 0.16);
-    }
-
-    .globe::before,
-    .globe::after {
-      content: "";
-      position: absolute;
+    #globe {
+      position: fixed;
       inset: 0;
-      border-radius: inherit;
+      width: 100vw;
+      height: 100vh;
+      background: #050607;
+    }
+
+    .fallback-globe {
+      position: fixed;
+      right: min(7vw, 92px);
+      top: 50%;
+      z-index: 1;
+      width: min(50vw, 620px);
+      aspect-ratio: 1;
+      border: 1px solid rgba(245, 219, 140, 0.28);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 48% 43%, rgba(217, 183, 101, 0.72) 0 15%, transparent 16%),
+        radial-gradient(circle at 48% 58%, rgba(217, 183, 101, 0.42) 0 11%, transparent 12%),
+        radial-gradient(circle at 42% 36%, rgba(217, 183, 101, 0.4) 0 5%, transparent 6%),
+        radial-gradient(circle at 50% 50%, rgba(126, 128, 121, 0.66) 0 59%, rgba(34, 35, 35, 0.9) 72%, rgba(5, 6, 7, 0) 73%);
+      box-shadow:
+        0 0 110px rgba(217, 183, 101, 0.12),
+        inset -48px -28px 84px rgba(0, 0, 0, 0.72),
+        inset 24px 18px 50px rgba(255, 255, 255, 0.08);
+      opacity: 0.72;
+      transform: translateY(-50%);
+      transition: opacity 380ms ease;
       pointer-events: none;
     }
 
-    .globe::before {
-      background:
-        repeating-linear-gradient(90deg, transparent 0 43px, rgba(255, 255, 255, 0.16) 44px 46px),
-        repeating-linear-gradient(0deg, transparent 0 48px, rgba(255, 255, 255, 0.13) 49px 51px);
-      mix-blend-mode: screen;
-      opacity: 0.6;
+    .fallback-globe::before,
+    .fallback-globe::after {
+      content: "";
+      position: absolute;
+      inset: 14%;
+      border-radius: 50%;
+      border: 1px solid rgba(245, 241, 232, 0.08);
     }
 
-    .globe::after {
-      background:
-        radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.42), transparent 0 18%),
-        linear-gradient(120deg, transparent 42%, rgba(0, 0, 0, 0.28));
+    .fallback-globe::after {
+      inset: 29% 18%;
+      border-color: rgba(245, 219, 140, 0.28);
+      transform: rotate(-18deg);
+    }
+
+    .is-ready .fallback-globe {
+      opacity: 0;
+    }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.22;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: radial-gradient(circle at 50% 50%, transparent 0 30%, #000 88%);
+    }
+
+    .shell {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      width: 100vw;
+      min-height: 100vh;
+      padding: clamp(20px, 4vw, 48px);
+      pointer-events: none;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .brand-mark {
+      width: 12px;
+      height: 12px;
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      box-shadow: 0 0 28px rgba(217, 183, 101, 0.9);
+    }
+
+    .waitlist {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 18px;
+      border: 1px solid rgba(245, 219, 140, 0.42);
+      border-radius: 999px;
+      background: rgba(245, 219, 140, 0.11);
+      color: var(--ink);
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-decoration: none;
+      backdrop-filter: blur(18px);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.25);
+      transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+    }
+
+    .waitlist:hover,
+    .waitlist:focus-visible {
+      border-color: rgba(245, 219, 140, 0.78);
+      background: rgba(245, 219, 140, 0.19);
+      transform: translateY(-1px);
+      outline: none;
+    }
+
+    .headline {
+      align-self: end;
+      width: min(520px, 100%);
+      margin-bottom: clamp(56px, 9vh, 96px);
     }
 
     h1 {
+      max-width: 10ch;
       margin: 0;
-      font-size: clamp(2rem, 7vw, 4.8rem);
-      font-weight: 700;
+      font-size: clamp(3rem, 9vw, 8.6rem);
+      line-height: 0.88;
+      font-weight: 800;
       letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 32rem;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      line-height: 1.65;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      width: fit-content;
+      max-width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      color: rgba(245, 241, 232, 0.74);
+      font-size: 0.78rem;
+      font-weight: 650;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      backdrop-filter: blur(18px);
+    }
+
+    .status-line {
+      width: 34px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    .fallback {
+      position: fixed;
+      inset: auto 24px 24px;
+      z-index: 3;
+      display: none;
+      max-width: 420px;
+      color: rgba(245, 241, 232, 0.72);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .is-fallback .fallback {
+      display: block;
+    }
+
+    @media (max-width: 760px) {
+      body {
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      .shell {
+        min-height: 100svh;
+        padding: 18px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+      }
+
+      .brand {
+        font-size: 0.74rem;
+        letter-spacing: 0.14em;
+      }
+
+      .waitlist {
+        position: fixed;
+        top: 18px;
+        right: max(18px, calc(100vw - 372px));
+        z-index: 4;
+        min-height: 40px;
+        padding: 0 14px;
+        font-size: 0.84rem;
+      }
+
+      .headline {
+        margin-bottom: 34px;
+      }
+
+      .fallback-globe {
+        right: -32vw;
+        top: 45%;
+        width: 92vw;
+        opacity: 0.56;
+      }
+
+      h1 {
+        max-width: 8ch;
+      }
+
+      .subtitle {
+        max-width: 22rem;
+        margin-top: 16px;
+      }
+
+      .status {
+        max-width: min(100%, 19rem);
+        white-space: normal;
+        border-radius: 8px;
+        line-height: 1.4;
+      }
     }
   </style>
 </head>
 <body>
-  <main class="scene">
-    <div class="globe" role="img" aria-label="A glowing illustrated globe"></div>
-    <h1>DarkPath</h1>
+  <canvas id="globe" aria-label="Interactive 3D globe with Africa highlighted and route arcs crossing the continent"></canvas>
+  <div class="fallback-globe" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand" aria-label="DarkPath">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>DarkPath</span>
+      </div>
+      <a class="waitlist" href="mailto:hello@darkpath.africa?subject=DarkPath%20Waitlist">Join Waitlist</a>
+    </header>
+
+    <section class="headline" aria-labelledby="title">
+      <h1 id="title">DarkPath</h1>
+      <p class="subtitle">A spatial network for discovering routes across Africa, built around the map itself.</p>
+    </section>
+
+    <footer class="status" aria-label="Globe interaction status">
+      <span>Drag to rotate</span>
+      <span class="status-line" aria-hidden="true"></span>
+      <span>Scroll to zoom</span>
+    </footer>
   </main>
+  <p class="fallback">The interactive globe needs WebGL. Try opening this page in a current desktop or mobile browser.</p>
+
+  <script type="module">
+    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js";
+    import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/controls/OrbitControls.js";
+
+    const AFRICA = [
+      [-17, 32], [-8, 35], [2, 37], [12, 33], [25, 32], [34, 31], [35, 23],
+      [43, 12], [51, 11], [50, 2], [43, -11], [40, -20], [33, -27], [30, -34],
+      [20, -35], [13, -29], [10, -18], [4, -8], [-5, 4], [-13, 9], [-17, 18]
+    ];
+
+    const MADAGASCAR = [[48, -13], [51, -18], [49, -25], [45, -26], [43, -21], [45, -15]];
+
+    const CONTINENTS = [
+      [[-168, 72], [-138, 70], [-118, 58], [-102, 52], [-82, 49], [-60, 55], [-52, 44], [-76, 25], [-96, 16], [-118, 22], [-132, 36], [-156, 52]],
+      [[-82, 12], [-70, 10], [-56, -4], [-48, -18], [-54, -36], [-68, -54], [-78, -42], [-82, -22]],
+      [[-10, 72], [18, 72], [40, 62], [34, 48], [16, 42], [-8, 44], [-24, 58]],
+      [[32, 70], [75, 72], [120, 60], [150, 48], [142, 26], [112, 18], [86, 8], [64, 18], [44, 28], [36, 48]],
+      [[112, -12], [154, -20], [150, -38], [132, -44], [114, -34], [110, -22]],
+      [[-180, -66], [-120, -72], [-60, -68], [0, -74], [60, -68], [120, -72], [180, -66], [180, -88], [-180, -88]]
+    ];
+
+    const ROUTES = [
+      {
+        from: { name: "Lagos", lat: 6.5244, lon: 3.3792 },
+        to: { name: "Nairobi", lat: -1.2921, lon: 36.8219 },
+        color: 0xf5db8c
+      },
+      {
+        from: { name: "Cairo", lat: 30.0444, lon: 31.2357 },
+        to: { name: "Johannesburg", lat: -26.2041, lon: 28.0473 },
+        color: 0xf0c766
+      },
+      {
+        from: { name: "Dakar", lat: 14.7167, lon: -17.4677 },
+        to: { name: "Addis Ababa", lat: 8.9806, lon: 38.7578 },
+        color: 0xffe6a8
+      },
+      {
+        from: { name: "Accra", lat: 5.6037, lon: -0.187 },
+        to: { name: "Cape Town", lat: -33.9249, lon: 18.4241 },
+        color: 0xd9b765
+      }
+    ];
+
+    const canvas = document.querySelector("#globe");
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+
+    if (!renderer.capabilities.isWebGL2 && !renderer.capabilities.isWebGL) {
+      document.body.classList.add("is-fallback");
+    }
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x050607, 1);
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x050607, 0.035);
+
+    const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0.25, 0.2, 6.2);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.enablePan = false;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.38;
+    controls.minDistance = 2.35;
+    controls.maxDistance = 7.2;
+    controls.rotateSpeed = 0.42;
+    controls.zoomSpeed = 0.7;
+
+    const globeGroup = new THREE.Group();
+    scene.add(globeGroup);
+
+    const radius = 1.82;
+    const routeLift = 0.36;
+    const texture = buildEarthTexture();
+    const globe = new THREE.Mesh(
+      new THREE.SphereGeometry(radius, 96, 96),
+      new THREE.MeshStandardMaterial({
+        map: texture,
+        roughness: 0.88,
+        metalness: 0.02,
+        color: 0xd4d4cd
+      })
+    );
+    globeGroup.add(globe);
+
+    const africaBorder = buildBorder(AFRICA, radius + 0.018, 0xf3d579, 0.92);
+    globeGroup.add(africaBorder);
+
+    const routeGroup = new THREE.Group();
+    ROUTES.forEach((route) => {
+      routeGroup.add(buildRoute(route.from, route.to, radius + 0.035, routeLift, route.color));
+      routeGroup.add(buildMarker(route.from, radius + 0.058, route.color));
+      routeGroup.add(buildMarker(route.to, radius + 0.058, route.color));
+    });
+    globeGroup.add(routeGroup);
+
+    const atmosphere = new THREE.Mesh(
+      new THREE.SphereGeometry(radius * 1.045, 96, 96),
+      new THREE.ShaderMaterial({
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        side: THREE.BackSide,
+        uniforms: {
+          glowColor: { value: new THREE.Color(0xd9b765) }
+        },
+        vertexShader: `
+          varying vec3 vNormal;
+          void main() {
+            vNormal = normalize(normalMatrix * normal);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 glowColor;
+          varying vec3 vNormal;
+          void main() {
+            float intensity = pow(0.72 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.4);
+            gl_FragColor = vec4(glowColor, intensity * 0.34);
+          }
+        `
+      })
+    );
+    globeGroup.add(atmosphere);
+
+    const stars = buildStars();
+    scene.add(stars);
+
+    scene.add(new THREE.HemisphereLight(0xf5f1e8, 0x111111, 1.15));
+    const keyLight = new THREE.DirectionalLight(0xffefd1, 2.5);
+    keyLight.position.set(-3.4, 2.2, 4.5);
+    scene.add(keyLight);
+    const rimLight = new THREE.DirectionalLight(0x8597ff, 1.25);
+    rimLight.position.set(3.4, -1.8, -2.6);
+    scene.add(rimLight);
+
+    function resize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.fov = width < 760 ? 48 : 42;
+      camera.position.z = width < 760 ? 6.9 : 6.2;
+      globeGroup.position.x = width < 760 ? 0.42 : 1.05;
+      globeGroup.position.y = width < 760 ? 0.22 : -0.06;
+      camera.updateProjectionMatrix();
+    }
+
+    window.addEventListener("resize", resize);
+    resize();
+
+    const clock = new THREE.Clock();
+    function animate() {
+      const elapsed = clock.getElapsedTime();
+      routeGroup.children.forEach((child, index) => {
+        if (child.material) {
+          child.material.opacity = child.userData.isMarker
+            ? 0.72 + Math.sin(elapsed * 2.8 + index) * 0.18
+            : 0.54 + Math.sin(elapsed * 1.8 + index) * 0.12;
+        }
+      });
+      stars.rotation.y = elapsed * 0.012;
+      controls.update();
+      renderer.render(scene, camera);
+      document.body.classList.add("is-ready");
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    function buildEarthTexture() {
+      const canvasTexture = document.createElement("canvas");
+      canvasTexture.width = 2048;
+      canvasTexture.height = 1024;
+      const ctx = canvasTexture.getContext("2d");
+
+      const ocean = ctx.createLinearGradient(0, 0, canvasTexture.width, canvasTexture.height);
+      ocean.addColorStop(0, "#1a1b1b");
+      ocean.addColorStop(0.52, "#0f1112");
+      ocean.addColorStop(1, "#282821");
+      ctx.fillStyle = ocean;
+      ctx.fillRect(0, 0, canvasTexture.width, canvasTexture.height);
+
+      drawGraticule(ctx, canvasTexture.width, canvasTexture.height);
+      CONTINENTS.forEach((continent) => drawPolygon(ctx, continent, canvasTexture.width, canvasTexture.height, "rgba(148, 148, 140, 0.54)", "rgba(255, 255, 255, 0.1)", 2));
+      drawPolygon(ctx, AFRICA, canvasTexture.width, canvasTexture.height, "rgba(217, 183, 101, 0.54)", "rgba(245, 219, 140, 0.94)", 6);
+      drawPolygon(ctx, MADAGASCAR, canvasTexture.width, canvasTexture.height, "rgba(217, 183, 101, 0.42)", "rgba(245, 219, 140, 0.72)", 3);
+
+      const texture = new THREE.CanvasTexture(canvasTexture);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      texture.needsUpdate = true;
+      return texture;
+    }
+
+    function drawGraticule(ctx, width, height) {
+      ctx.strokeStyle = "rgba(245, 241, 232, 0.055)";
+      ctx.lineWidth = 1;
+      for (let lon = -180; lon <= 180; lon += 30) {
+        const x = project(lon, 0, width, height).x;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let lat = -60; lat <= 60; lat += 30) {
+        const y = project(0, lat, width, height).y;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawPolygon(ctx, points, width, height, fill, stroke, lineWidth) {
+      ctx.beginPath();
+      points.forEach(([lon, lat], index) => {
+        const { x, y } = project(lon, lat, width, height);
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      ctx.closePath();
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = lineWidth;
+      ctx.lineJoin = "round";
+      ctx.stroke();
+    }
+
+    function project(lon, lat, width, height) {
+      return {
+        x: ((lon + 180) / 360) * width,
+        y: ((90 - lat) / 180) * height
+      };
+    }
+
+    function latLonToVector(lon, lat, targetRadius) {
+      const phi = THREE.MathUtils.degToRad(90 - lat);
+      const theta = THREE.MathUtils.degToRad(lon);
+      return new THREE.Vector3(
+        targetRadius * Math.sin(phi) * Math.sin(theta),
+        targetRadius * Math.cos(phi),
+        targetRadius * Math.sin(phi) * Math.cos(theta)
+      );
+    }
+
+    function buildBorder(points, targetRadius, color, opacity) {
+      const vectors = points.map(([lon, lat]) => latLonToVector(lon, lat, targetRadius));
+      vectors.push(vectors[0].clone());
+      const geometry = new THREE.BufferGeometry().setFromPoints(vectors);
+      return new THREE.Line(
+        geometry,
+        new THREE.LineBasicMaterial({
+          color,
+          transparent: true,
+          opacity,
+          blending: THREE.AdditiveBlending
+        })
+      );
+    }
+
+    function buildRoute(from, to, targetRadius, lift, color) {
+      const start = latLonToVector(from.lon, from.lat, targetRadius);
+      const end = latLonToVector(to.lon, to.lat, targetRadius);
+      const mid = start.clone().add(end).normalize().multiplyScalar(targetRadius + lift);
+      const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+      const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(72));
+      const line = new THREE.Line(
+        geometry,
+        new THREE.LineBasicMaterial({
+          color,
+          transparent: true,
+          opacity: 0.72,
+          blending: THREE.AdditiveBlending
+        })
+      );
+      return line;
+    }
+
+    function buildMarker(point, targetRadius, color) {
+      const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(0.022, 16, 16),
+        new THREE.MeshBasicMaterial({
+          color,
+          transparent: true,
+          opacity: 0.86,
+          blending: THREE.AdditiveBlending
+        })
+      );
+      marker.position.copy(latLonToVector(point.lon, point.lat, targetRadius));
+      marker.userData.isMarker = true;
+      return marker;
+    }
+
+    function buildStars() {
+      const geometry = new THREE.BufferGeometry();
+      const vertices = [];
+      for (let i = 0; i < 520; i += 1) {
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos((Math.random() * 2) - 1);
+        const distance = 22 + Math.random() * 18;
+        vertices.push(
+          distance * Math.sin(phi) * Math.cos(theta),
+          distance * Math.cos(phi),
+          distance * Math.sin(phi) * Math.sin(theta)
+        );
+      }
+      geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+      return new THREE.Points(
+        geometry,
+        new THREE.PointsMaterial({
+          color: 0xf5f1e8,
+          size: 0.018,
+          transparent: true,
+          opacity: 0.34,
+          sizeAttenuation: true
+        })
+      );
+    }
+
+  </script>
 </body>
 </html>
