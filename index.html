@@ -3,29 +3,91 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DarkPath Test Page</title>
+  <title>DarkPath Globe</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
       display: grid;
       place-items: center;
+      overflow: hidden;
       font-family: Segoe UI, Tahoma, sans-serif;
-      background: #0b1020;
-      color: #f3f5ff;
+      background:
+        radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.2) 0 1px, transparent 2px),
+        radial-gradient(circle at 72% 18%, rgba(255, 255, 255, 0.18) 0 1px, transparent 2px),
+        radial-gradient(circle at 88% 64%, rgba(255, 255, 255, 0.16) 0 1px, transparent 2px),
+        linear-gradient(145deg, #05070d, #10192b 58%, #080b12);
+      color: #eef6ff;
     }
-    .card {
-      padding: 24px;
-      border: 1px solid #253059;
-      border-radius: 12px;
-      background: #111936;
+
+    .scene {
+      display: grid;
+      gap: 28px;
+      justify-items: center;
+      padding: 32px;
+      text-align: center;
+    }
+
+    .globe {
+      position: relative;
+      width: min(72vw, 420px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.78), transparent 0 3%, transparent 16%),
+        radial-gradient(circle at 28% 25%, #74d8ff 0 10%, transparent 11%),
+        radial-gradient(circle at 42% 47%, #2fb06f 0 9%, transparent 10%),
+        radial-gradient(circle at 61% 34%, #57c87d 0 8%, transparent 9%),
+        radial-gradient(circle at 63% 62%, #d9b15c 0 8%, transparent 9%),
+        radial-gradient(circle at 44% 70%, #36a96c 0 7%, transparent 8%),
+        radial-gradient(circle at 50% 50%, #1a8ad8 0 58%, #0c3e78 75%, #061a3c 100%);
+      border: 2px solid rgba(180, 226, 255, 0.45);
+      box-shadow:
+        0 0 48px rgba(80, 180, 255, 0.34),
+        inset -34px -26px 60px rgba(0, 0, 0, 0.48),
+        inset 18px 18px 40px rgba(255, 255, 255, 0.16);
+    }
+
+    .globe::before,
+    .globe::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    .globe::before {
+      background:
+        repeating-linear-gradient(90deg, transparent 0 43px, rgba(255, 255, 255, 0.16) 44px 46px),
+        repeating-linear-gradient(0deg, transparent 0 48px, rgba(255, 255, 255, 0.13) 49px 51px);
+      mix-blend-mode: screen;
+      opacity: 0.6;
+    }
+
+    .globe::after {
+      background:
+        radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.42), transparent 0 18%),
+        linear-gradient(120deg, transparent 42%, rgba(0, 0, 0, 0.28));
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 7vw, 4.8rem);
+      font-weight: 700;
+      letter-spacing: 0;
     }
   </style>
 </head>
 <body>
-  <main class="card">
-    <h1>DarkPath is live</h1>
-    <p>If you can read this on your domain, deployment is working.</p>
+  <main class="scene">
+    <div class="globe" role="img" aria-label="A glowing illustrated globe"></div>
+    <h1>DarkPath</h1>
   </main>
 </body>
 </html>
